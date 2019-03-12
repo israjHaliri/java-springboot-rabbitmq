@@ -29,29 +29,6 @@ public class RabbitBroadcastConfig {
     }
 
     @Bean
-    Exchange fanOutExchange() {
-        return new FanoutExchange(FANOUT_EXCHANGE);
-    }
-
-    @Bean
-    Queue fanOutQueue() {
-        return QueueBuilder.durable(FANOUT_QUEUE1)
-                .withArgument("x-dead-letter-exchange", "")
-                .withArgument("x-dead-letter-routing-key", FANOUT_DEAD)
-                .withArgument("x-message-ttl", 5000)
-                .build();
-    }
-
-    @Bean
-    Queue fanOutQueue2() {
-        return QueueBuilder.durable(FANOUT_QUEUE2)
-                .withArgument("x-dead-letter-exchange", "")
-                .withArgument("x-dead-letter-routing-key", FANOUT_DEAD)
-                .withArgument("x-message-ttl", 5000)
-                .build();
-    }
-
-    @Bean
     Queue topicQueue() {
         return QueueBuilder.durable(TOPIC_QUEUE1)
                 .withArgument("x-dead-letter-exchange", "")
@@ -80,13 +57,17 @@ public class RabbitBroadcastConfig {
     }
 
     @Bean
-    Binding bindingQFan() {
-        return BindingBuilder.bind(fanOutQueue()).to(fanOutExchange()).with("").noargs();
-    }
+    public List<Declarable> fanoutBindings() {
+        Queue fanoutQueue1 = new Queue(FANOUT_QUEUE1, false);
+        Queue fanoutQueue2 = new Queue(FANOUT_QUEUE2, false);
 
-    @Bean
-    Binding bindingQFan2() {
-        return BindingBuilder.bind(fanOutQueue2()).to(fanOutExchange()).with("").noargs();
+        FanoutExchange fanoutExchange = new FanoutExchange(FANOUT_EXCHANGE);
+        return Arrays.asList(
+                fanoutQueue1,
+                fanoutQueue2,
+                fanoutExchange,
+                BindingBuilder.bind(fanoutQueue1).to(fanoutExchange),
+                BindingBuilder.bind(fanoutQueue2).to(fanoutExchange));
     }
 
     @Bean
